@@ -34,6 +34,31 @@ fn main() {
 
     println!("Done! ({} unique layers)", mcount);
 
+    // Generate a 2D array of vectors which contains data on what function needs to come before each of the unique layers in order to reach the output
+    print!("Generating union...");
+
+    let mut target_outputs = Vec::new();
+    for i in 0..STATES {
+        if TARGET.contains(&i) {
+            target_outputs.push(i);
+        }
+    }
+
+    let mut endings = Vec::new();
+    for i in 0..mcount {
+        endings.push(i);
+        for j in &target_outputs {
+            if !unique[i].contains(&j) {
+                target_outputs.pop();
+                break;
+            }
+        }
+    }
+
+    //let union = generate_union(&unique, mcount);
+
+    println!("Done! ({:?} end layers)", endings.len());
+
     // Generate pairs of layers which can come one after another
     print!("Generating pairs...");
 
@@ -288,6 +313,7 @@ fn generate_pairs (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> Vec<V
     return pairs;
 }
 
+// Generates the vector of unique layers
 fn generate_unique () -> Vec<[i16; STATES as usize]> {
     let mut groups: Vec<i16> = Vec::new();
     for i in TARGET {
@@ -308,6 +334,7 @@ fn generate_unique () -> Vec<[i16; STATES as usize]> {
         let mut groups2: Vec<i16> = Vec::new();
 
         for j in 0..STATES {
+            // A single input-output pair passing through a layer (The maximum of the two comparators)
             current[j as usize] = max(comparator(j, va, ma), comparator(vb, j, mb));
             if !groups2.contains(&current[j as usize]) {
                 groups2.push(current[j as usize]);
@@ -321,6 +348,7 @@ fn generate_unique () -> Vec<[i16; STATES as usize]> {
     return outputs;
 }
 
+// Implementation of a Minecraft Redstone Comparator
 fn comparator (back: i16, side: i16, mode: bool) -> i16 {
     if side > back {
         return 0;
@@ -331,6 +359,7 @@ fn comparator (back: i16, side: i16, mode: bool) -> i16 {
     }
 }
 
+// Passes the input through the provided layer
 fn through (layer: [i16; STATES as usize], input: [i16; STATES as usize]) -> [i16; STATES as usize] {
     let mut output = [0; STATES as usize];
 
