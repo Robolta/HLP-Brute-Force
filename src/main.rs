@@ -1,5 +1,6 @@
 use std::io::stdin;
 use std::time::Instant;
+use std::cmp::max;
 
 const STATES: i16 = 16;
 const TARGET: [i16; STATES as usize] = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0];//[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3];
@@ -221,7 +222,8 @@ Generates a union for all unique layers which is used to check if a given functi
                 }
             }
         }
-        // Continue here
+
+        let layer: [i16; STATES as usize] = unique[i];
     }
 
     return union;
@@ -310,10 +312,6 @@ fn generate_unique () -> Vec<[i16; STATES as usize]> {
         }
     }
     return outputs;
-}
-
-fn max (a: i16, b: i16) -> i16 {
-    return if a > b {a} else {b};
 }
 
 fn comparator (back: i16, side: i16, mode: bool) -> i16 {
