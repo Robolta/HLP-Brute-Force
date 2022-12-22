@@ -210,7 +210,7 @@ fn legal (current: [i16; STATES as usize], legality: &Vec<[usize; 2]>) -> bool {
 /*
 Generates a union for all unique layers which is used to check if a given function can reach the target solution with one additional layer
 */
-fn generate_union (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> [[Vec<u64>; STATES as usize]; STATES as usize] {
+/*fn generate_union (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> [[Vec<u64>; STATES as usize]; STATES as usize] {
     let mut union: [[Vec<u64>; STATES as usize]; STATES as usize] = Default::default();
 
     for i in 0..mcount {
@@ -225,7 +225,7 @@ fn generate_union (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> [[Vec
     }
 
     return union;
-}
+}*/
 
 /*
 Generates a vector of valid layers to follow each layer in unique
