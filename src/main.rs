@@ -7,6 +7,10 @@ const TARGET: [i16; STATES as usize] = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1
 const DEBUG: u16 = 0; // 0, 1, 2, 3 are usable values currently
 
 fn main() {
+
+    let start = Instant::now();
+
+    // Generate vector used to verify legality of intermediate outputs
     print!("Generating legality vector...");
 
     let mut legality: Vec<[usize; 2]> = Vec::new();
@@ -19,6 +23,8 @@ fn main() {
     }
     
     println!("Done! ({} different pairs)", legality.len());
+
+    // Generate vector of unique layers
     print!("Generating unique...");
 
     let mut unique: Vec<[i16; STATES as usize]> = generate_unique();
@@ -27,9 +33,9 @@ fn main() {
     let mcount = unique.len();
 
     println!("Done! ({} unique layers)", mcount);
-    print!("Generating pairs...");
 
-    let start = Instant::now();
+    // Generate pairs of layers which can come one after another
+    print!("Generating pairs...");
 
     let pairs: Vec<Vec<[usize; 2]>> = generate_pairs(&unique, mcount);
 
@@ -38,7 +44,8 @@ fn main() {
         pair_length += p.len();
     }
 
-    println!("Done! ({} pairs) {:?}", thousands(pair_length), start.elapsed());
+    println!("Done! ({} pairs)", thousands(pair_length));
+    println!("Precalculations done (Took {:?})\n", start.elapsed());
 
     let mut count: Vec<[usize; 2]> = Vec::new();
     count.push([0, 0]);
@@ -50,7 +57,7 @@ fn main() {
 
     let start = Instant::now();
 
-    println!("Searching for {:?}", TARGET);
+    println!("Searching for {:?}...", TARGET);
     print!("Depth 1");
     
     loop {
