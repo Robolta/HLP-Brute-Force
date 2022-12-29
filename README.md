@@ -61,6 +61,19 @@ So, again, the problem boils down to finding a configuration of layers which use
 [Sorting by Prefix Reversals is NP-Hard](https://arxiv.org/abs/1111.0434v1) and they are the only layers we have to sort while maintaining the full 16 output values.  
 This means that our problem only proves to be doable optimally with brute force.
 
+### Layer Notation
+
+Currently the common notation is called "asterisk notation" and is relatively straightforward.  
+The leftmost layer is always the comparator with a barrel as its side input.  
+Sides are denoted with an asterisk if in subtract mode (nothing in compare mode) along with the value of the correspoding barrel.  
+Sides are separated by a comma, layers are separated by a semicolon and go from input to output.  
+Whitespace is ignored and using either base ten or base sixteen is entirely up to you.
+
+Here are a few reference examples with their correspoding outputs.
+
+`1, *2; *3, 4;`         = `[4, 4, 4, 4, 4, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]`
+`1, *F; C, 3; A, *F;`   = `[15, 14, 13, 12, 15, 15, 15, 15, 15, 15, 15, 15, 12, 13, 14, 15]`
+
 ## HLP Optimized Brute Force
 *How exactly do you find optimal solutions?*
 
