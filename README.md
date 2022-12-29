@@ -71,7 +71,7 @@ Whitespace is ignored and using either base ten or base sixteen is entirely up t
 
 Here are a few reference examples with their correspoding outputs.
 
-`1, *2; *3, 4;`         = `[4, 4, 4, 4, 4, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]`
+`1, *2; *3, 4;`         = `[4, 4, 4, 4, 4, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]`  
 `1, *F; C, 3; A, *F;`   = `[15, 14, 13, 12, 15, 15, 15, 15, 15, 15, 15, 15, 12, 13, 14, 15]`
 
 ## HLP Optimized Brute Force
