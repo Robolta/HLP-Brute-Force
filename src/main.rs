@@ -3,11 +3,11 @@ use std::time::Instant;
 
 mod constants;
 mod optimizations;
-mod layer;
+mod layers;
 
 use constants::*;
 use optimizations::{legality::*, unique_vec::*, union_intersect::*, pair_vec::*};
-use layer::*;
+use layers::*;
 
 fn main() {
 

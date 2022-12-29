@@ -1,5 +1,6 @@
 use crate::constants::*;
 use std::cmp::max;
+use itertools::Itertools;
 
 // Implementation of a Minecraft Redstone Comparator
 pub fn comparator (back: i16, side: i16, mode: bool) -> i16 {
@@ -88,4 +89,8 @@ pub fn print_notation (count: Vec<[usize; 2]>, unique: &Vec<[i16; STATES as usiz
         }
     }
     println!("\n{}", output);
+}
+
+pub fn groups (output: [i16; STATES as usize]) -> usize {
+    return output.into_iter().unique().collect_vec().len();
 }

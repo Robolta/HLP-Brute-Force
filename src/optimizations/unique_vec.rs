@@ -1,7 +1,6 @@
 use crate::constants::*;
-use crate::layer::*;
+use crate::layers::*;
 use std::cmp::max;
-use itertools::Itertools;
 
 // Generates the vector of unique layers
 pub fn generate_unique () -> Vec<[i16; STATES as usize]> {
@@ -41,8 +40,4 @@ fn layer (a: i16, b: i16, mode_a: bool, mode_b: bool) -> [i16; STATES as usize] 
         output[i as usize] = max(a_side, b_side);
     }
     return output;
-}
-
-fn groups (output: [i16; STATES as usize]) -> usize {
-    return output.into_iter().unique().collect_vec().len();
 }
