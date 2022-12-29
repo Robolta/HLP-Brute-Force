@@ -69,6 +69,10 @@ Just going 3 layers deep means you've already got 1,073,741,824 possible functio
 Currently our programs can reach around 6 layer deep relatively quickly.  
 Here are the optimizations used to achieve that.
 
+### Storing Layers
+
+Likely the most trivial optimization: storing the outputs for each layer rather than calculating it each time.
+
 ### Unique Layers
 
 Unique layers are how we refer to the set of layers where there is at most one layer for any given function.  
@@ -78,3 +82,35 @@ This set has 739 layers in it, meaning it's a very trivial reduction of our orig
 
 Along with unique layers, we can extend things to unique functions.  
 Currently it's only really feasible to store 2 or 3 deep at most, given the space and time requirements to do any more.
+
+### Intermediate Outputs
+
+Storing outputs between each pair of layers avoids having to recompute them.  
+It's also significant in the Legality optimization.
+
+### Group Check
+
+An intermediate output can't reach the target if it has less output values than the target does.  
+This is a simple check that can be applied even on the unique layers, since it isn't dependant on location within the function.
+
+### Function Legality
+
+Functions which map two inputs to the same output which are different outputs in the target, are not valid as intermediate outputs.  
+There is no way to separate the two values once they've reached the same value.  
+This works along with the Intermediate Output optimization to do more than verify the final output (which generally isn't worth doing over simply checking if it's the solution).
+This enables us to check intermediate outputs when they are first generated and easily skip large sections rather than simply iterating the very end.
+Unfortunately, this optimization is dependant on starting from the input, meaning it cannot be applied to unique layers the same as Group Check.
+
+### Pairwise Iteration
+
+Each layer has a set of layers which can follow it, this is generally smaller than the set of all unique layers.  
+Similar to Unique Layers, we can apply a Group Check but not Function Legality since their location isn't defined.
+
+### Union-Intersection
+
+A more complicated optimization where the idea is to check if the current function can reach the output in 1 more layer.  
+This is done by pre-computing a 2D array of vectors where every possible input-output pair is represented.  
+For a given input-output pair, the layers within the vector are ones which would bring the provided input the rest of the way to the correct output.  
+The check is performed by using the current function's input-output pairs to get 16 corresponding vectors, then checking if the vectors share at least 1 common element.  
+If this check succeeds, the check can be ignored for the rest of the depth.  
+However, the current depth still needs to be searched entirely in order to avoid missing a potentially shorter solution.
