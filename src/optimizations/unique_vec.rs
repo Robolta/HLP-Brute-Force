@@ -1,5 +1,5 @@
-use crate::constants::{STATES, TARGET};
-use crate::comp::comparator;
+use crate::constants::*;
+use crate::comp::*;
 use std::cmp::max;
 
 // Generates the vector of unique layers
