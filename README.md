@@ -18,6 +18,7 @@ Given a target sequence, find the optimal (shortest) function of layers which re
 First, what is a layer?
 
 A layer is a redstone circuit within the game Minecraft.  
+It was first designed by Aminotreal and Powsi.
 It has 1024 possible static states which affect the main input-output relationship.
 
 ![image](https://media.discordapp.net/attachments/721120731974598726/1017443702332993616/unknown.png)
