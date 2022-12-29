@@ -1,9 +1,10 @@
 use std::io::stdin;
 use std::time::Instant;
 use std::cmp::max;
+use bit_vec::BitVec;
 
 const STATES: i16 = 16;
-const TARGET: [i16; STATES as usize] = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0];//[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3];
+const TARGET: [i16; STATES as usize] = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0]; //[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3];
 const DEBUG: u16 = 0; // 0, 1, 2, 3 are usable values currently
 
 fn main() {
@@ -55,7 +56,8 @@ fn main() {
         }
     }
 
-    //let union = generate_union(&unique, mcount);
+    let union = generate_union(&endings, &unique);
+    //println!("{:?}", union);
 
     println!("Done! ({:?} end layers)", endings.len());
 
@@ -82,25 +84,58 @@ fn main() {
 
     let start = Instant::now();
 
+    let mut candidate: Vec<[usize; 2]> = Default::default();
+    let mut next_layer = false; // true if Union-Intersection Optimization finds a candidate
+
     println!("Searching for {:?}...", TARGET);
-    print!("Depth 1");
+    print!("Depth 1 (and 2)");
     
     loop {
+        let pdepth = depth;
         (count, current, depth) = next(count, current, depth, &unique, mcount, &pairs, &legality, start);
         if DEBUG & 1 == 1 {
             println!("\t[TESTING] {:?}", current[depth - 1]);
         }
 
-        if current[depth - 1] == TARGET {
+        if depth != pdepth {
+            //println!("{}, {:?}", depth, count);
+            if next_layer {
+                break;
+            }
+        }
+
+        let output = current[depth - 1];
+        if output == TARGET {
+            candidate = Vec::new();
+            for i in &count {
+                candidate.push(*i);
+            }
+            next_layer = false;
             break;
+        } else if !next_layer {
+            next_layer = intersect_check(output, &union);
+            if next_layer {
+                for i in &count {
+                    candidate.push(*i);
+                }
+            }
         }
     }
 
     println!(" Solution Found! ({:?})", start.elapsed());
-    print_notation(count, unique);
+    if next_layer {
+        print_notation(find_next(&candidate, &unique, &endings).to_vec(), &unique);
+        //println!("{:?} (n+1)", find_next(&candidate, &unique, &endings).to_vec());
 
-    let x = stdin().read_line(&mut String::new()); // Pauses so the output is readable when run as a .exe
-    println!("{:?}", x);
+        let x = stdin().read_line(&mut String::new()); // Pauses so the output is readable when run as a .exe
+        println!("{:?}", x);
+    } else {
+        print_notation(candidate.to_vec(), &unique);
+        //println!("{:?} (n)", candidate.to_vec());
+
+        let x = stdin().read_line(&mut String::new()); // Pauses so the output is readable when run as a .exe
+        println!("{:?}", x);
+    }
 
 }
 
@@ -117,7 +152,31 @@ fn thousands (n: usize) -> String {
     return output;
 }
 
-fn print_notation (count: Vec<[usize; 2]>, unique: Vec<[i16; STATES as usize]>) {
+fn find_next (count: &Vec<[usize; 2]>, unique: &Vec<[i16; STATES as usize]>, endings: &Vec<usize>) -> Vec<[usize; 2]> {
+    let mut current: [i16; STATES as usize] = [0; STATES as usize];
+    for i in 0..STATES as usize {
+        current[i] = i as i16;
+    }
+
+    for c in count.to_vec() {
+        current = through(unique[c[0]], current);
+    }
+
+    let mut ncount = Vec::new();
+    for c in count {
+        ncount.push(*c);
+    }
+
+    for e in endings {
+        if through(unique[*e], current) == TARGET {
+            ncount.push([*e, *e]);
+            break;
+        }
+    }
+    return ncount;
+}
+
+fn print_notation (count: Vec<[usize; 2]>, unique: &Vec<[i16; STATES as usize]>) {
     let mut output = String::new();
     for c in count {
         for i in 0..(4 * STATES.pow(2)) {
@@ -147,17 +206,31 @@ fn print_notation (count: Vec<[usize; 2]>, unique: Vec<[i16; STATES as usize]>) 
     println!("\n{}", output);
 }
 
-fn iter8 (mut count: Vec<[usize; 2]>, mut change: usize, mut last: usize, mcount: usize, mut depth: usize, pairs:&Vec<Vec<[usize; 2]>>, start: Instant) -> (Vec<[usize; 2]>, usize, usize, usize) {
+/*
+Iterates the current function once
+mut count: Vec<[usize; 2]>      - A vector of index pairs.  First value is the layer's index within the unique vector, second is the layer's index within the previous layer's pair vector.
+mut change: usize               - The index to be changed within count.
+mut last: usize                 - The last used index within count.
+mcount: usize                   - The number of layers in unique.
+mut depth: usize                - The current search depth.
+pairs: &Vec<Vec<[usize; 2]>>    - Stores which layers can follow each of the unique layers.
+start: Instant                  - Used for timing.
+
+The entire function contains a main loop which iterates until all changes have successfully resulted in a valid iteration.
+The inner loop at the top handles changes which are then validated by the remaining code.
+*/
+fn iter8 (mut count: Vec<[usize; 2]>, mut change: usize, mut last: usize, mcount: usize, mut depth: usize, pairs: &Vec<Vec<[usize; 2]>>, start: Instant) -> (Vec<[usize; 2]>, usize, usize, usize) {
     loop {
         loop { // count has [i16; 2] where [unique index, pairs element index]
             if change == 0 {
                 if count[0][0] == mcount - 1 { // Special case for input layer reaching maximum value
                     count[0] = [0, 0];
                     count.push([0, 0]);
-                    depth += 1;
-                    last += 1;
+                    count.push([0, 0]);
+                    depth += 2;
+                    last += 2;
                     println!("\t({:?})", start.elapsed());
-                    print!("Depth {}", depth);
+                    print!("Depth {} (and {})", depth, depth + 1);
                     break;
                 } else { // Input layer iterate
                     count[0] = [count[0][0] + 1, count[0][1] + 1];
@@ -191,6 +264,18 @@ fn iter8 (mut count: Vec<[usize; 2]>, mut change: usize, mut last: usize, mcount
     return (count, change, last, depth);
 }
 
+/*
+Returns the next valid function to check.
+
+mut count: Vec<[usize; 2]>                  - A vector of index pairs.  First value is the layer's index within the unique vector, second is the layer's index within the previous layer's pair vector.
+mut current: Vec<[i16; STATES as usize]>    - The immediate outputs of the current function.  Used to avoid recalculating the entire function whenever it is changed.
+mut depth: usize                            - The current search depth.
+unique: &Vec<[i16; STATES as usize]>        - The vector of unique layers for the TARGET.
+mcount: usize                               - The number of layers in unique.
+pairs: &Vec<Vec<[usize; 2]>>                - Stores which layers can follow each of the unique layers.
+legality: &Vec<[usize; 2]>                  - A vector specifying what input-output pairs are illegal.
+start: Instant                              - Used for timing.
+*/
 fn next (mut count: Vec<[usize; 2]>, mut current: Vec<[i16; STATES as usize]>, mut depth: usize, unique: &Vec<[i16; STATES as usize]>, mcount: usize, pairs: &Vec<Vec<[usize; 2]>>, legality: &Vec<[usize; 2]>, start: Instant) -> (Vec<[usize; 2]>, Vec<[i16; STATES as usize]>, usize) {
     let mut last = depth - 1;
     let mut change = last;
@@ -243,23 +328,29 @@ fn legal (current: [i16; STATES as usize], legality: &Vec<[usize; 2]>) -> bool {
 /*
 Generates a union for all unique layers which is used to check if a given function can reach the target solution with one additional layer
 */
-/*fn generate_union (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> [[Vec<u64>; STATES as usize]; STATES as usize] {
-    let mut union: [[Vec<u64>; STATES as usize]; STATES as usize] = Default::default();
+fn generate_union (endings: &Vec<usize>, unique: &Vec<[i16; STATES as usize]>) -> [[BitVec; STATES as usize]; STATES as usize] {
+    let mut union: [[BitVec; STATES as usize]; STATES as usize] = Default::default();
 
-    for i in 0..mcount {
-        if i % 64 == 0 {
-            for input in 0..STATES as usize {
-                for output in 0..STATES as usize {
-                    union[input][output].push(0);
-                }
+    for input in 0..STATES as usize {
+        for output in 0..STATES as usize {
+            for e in endings {
+                union[input][output].push(unique[*e][output] == TARGET[input]);
             }
         }
-
-        let layer: [i16; STATES as usize] = unique[i];
     }
 
     return union;
-}*/
+}
+
+fn intersect_check (output: [i16; STATES as usize], union: &[[BitVec; STATES as usize]; STATES as usize]) -> bool {
+    let mut inter: BitVec = BitVec::from_elem(union[0][0].len(), true);
+
+    for i in 0..STATES as usize{
+        inter.and(&union[i][output[i] as usize]);
+    }
+    
+    return !inter.none();
+}
 
 /*
 Generates a vector of valid layers to follow each layer in unique
