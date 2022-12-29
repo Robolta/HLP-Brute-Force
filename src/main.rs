@@ -6,32 +6,28 @@ use bit_vec::BitVec;
 mod constants;
 use constants::{STATES, TARGET, DEBUG};
 
+mod legal_vec;
+use legal_vec::generate_legal;
+
+mod unique_vec;
+use unique_vec::generate_unique;
+
+mod comp;
+use comp::comparator;
+
 fn main() {
 
     let start = Instant::now();
 
     // Generate vector used to verify legality of intermediate outputs
     print!("Generating legality vector...");
-
-    let mut legality: Vec<[usize; 2]> = Vec::new();
-    for a in 0..STATES as usize {
-        for b in (a + 1)..STATES as usize {
-            if TARGET[a] != TARGET[b] {
-                legality.push([a, b]);
-            }
-        }
-    }
-    
+    let legality: Vec<[usize; 2]> = generate_legal();
     println!("Done! ({} different pairs)", legality.len());
 
     // Generate vector of unique layers
     print!("Generating unique...");
-
-    let mut unique: Vec<[i16; STATES as usize]> = generate_unique();
-    unique.remove(0);
-
+    let unique: Vec<[i16; STATES as usize]> = generate_unique();
     let mcount = unique.len();
-
     println!("Done! ({} unique layers)", mcount);
 
     // Generate a 2D array of vectors which contains data on what function needs to come before each of the unique layers in order to reach the output
@@ -402,52 +398,6 @@ fn generate_pairs (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> Vec<V
     }
 
     return pairs;
-}
-
-// Generates the vector of unique layers
-fn generate_unique () -> Vec<[i16; STATES as usize]> {
-    let mut groups: Vec<i16> = Vec::new();
-    for i in TARGET {
-        if !groups.contains(&(i as i16)) {
-            groups.push(i as i16);
-        }
-    }
-
-    let mut outputs: Vec<[i16; STATES as usize]> = Vec::new();
-    for i in 0..(4 * STATES.pow(2)) {
-
-        let ma = i / (2 * STATES.pow(2)) == 1;
-        let mb = (i / STATES.pow(2)) % 2 == 1;
-        let va = (i / STATES) % STATES;
-        let vb = i % STATES;
-
-        let mut current: [i16; STATES as usize] = [0; STATES as usize];
-        let mut groups2: Vec<i16> = Vec::new();
-
-        for j in 0..STATES {
-            // A single input-output pair passing through a layer (The maximum of the two comparators)
-            current[j as usize] = max(comparator(j, va, ma), comparator(vb, j, mb));
-            if !groups2.contains(&current[j as usize]) {
-                groups2.push(current[j as usize]);
-            }
-        }
-
-        if !outputs.contains(&current) &&  groups2.len() >= groups.len() {
-            outputs.push(current);
-        }
-    }
-    return outputs;
-}
-
-// Implementation of a Minecraft Redstone Comparator
-fn comparator (back: i16, side: i16, mode: bool) -> i16 {
-    if side > back {
-        return 0;
-    } else if mode {
-        return back - side;
-    } else {
-        return back;
-    }
 }
 
 // Passes the input through the provided layer
