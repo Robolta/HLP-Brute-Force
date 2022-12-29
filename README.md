@@ -1,6 +1,22 @@
 # HLP Brute Force
 An optimized brute force program created to find solutions for the Hex Layer Problem.
 
+## Table of Contents
+
+- The Hex Layer Problem
+    - Short Explanation
+    - Long Explanation
+    - Layer Notation
+- HLP Optimized Brute Force
+    - Storing Layers
+    - Unique Layers
+        - Unique Functions
+    - Intermediate Outputs
+    - Group Check
+    - Function Legality
+    - Pairwise Iteration
+    - Union-Intersection
+
 ## The Hex Layer Problem
 *What is the Hex Layer Problem anyway?*
 
