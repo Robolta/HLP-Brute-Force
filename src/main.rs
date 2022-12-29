@@ -3,9 +3,8 @@ use std::time::Instant;
 use std::cmp::max;
 use bit_vec::BitVec;
 
-const STATES: i16 = 16;
-const TARGET: [i16; STATES as usize] = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0]; //[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3];
-const DEBUG: u16 = 0; // 0, 1, 2, 3 are usable values currently
+mod constants;
+use constants::{STATES, TARGET, DEBUG};
 
 fn main() {
 
@@ -101,6 +100,8 @@ fn main() {
             //println!("{}, {:?}", depth, count);
             if next_layer {
                 break;
+            } else {
+                print!("Depth {} (and {})", depth, depth + 1);
             }
         }
 
@@ -230,7 +231,6 @@ fn iter8 (mut count: Vec<[usize; 2]>, mut change: usize, mut last: usize, mcount
                     depth += 2;
                     last += 2;
                     println!("\t({:?})", start.elapsed());
-                    print!("Depth {} (and {})", depth, depth + 1);
                     break;
                 } else { // Input layer iterate
                     count[0] = [count[0][0] + 1, count[0][1] + 1];
