@@ -11,7 +11,7 @@ use layer::*;
 
 fn main() {
 
-    let start = Instant::now();
+    let start: Instant = Instant::now();
 
     // Generate vector used to verify legality of intermediate outputs
     print!("Generating legality vector...");
@@ -21,12 +21,12 @@ fn main() {
     // Generate vector of unique layers
     print!("Generating unique...");
     let unique: Vec<[i16; STATES as usize]> = generate_unique();
-    let mcount = unique.len();
+    let mcount: usize = unique.len();
     println!("Done! ({} unique layers)", mcount);
 
     // Generate a 2D array of vectors which contains data on what function needs to come before each of the unique layers in order to reach the output
     print!("Generating union...");
-    let endings = ending_layers(&mcount, &unique);
+    let endings: Vec<usize> = ending_layers(&mcount, &unique);
     let union = generate_union(&endings, &unique);
     println!("Done! ({:?} end layers)", endings.len());
 
@@ -42,12 +42,12 @@ fn main() {
 
     let mut count: Vec<[usize; 2]> = vec![[0, 0]];
     let mut current: Vec<[i16; STATES as usize]> = vec![unique[0]];
-    let mut depth = 1;
+    let mut depth: usize = 1;
     
     let mut candidate: Vec<[usize; 2]> = Default::default();
-    let mut next_layer = false; // true if Union-Intersection Optimization finds a candidate
+    let mut next_layer: bool = false; // true if Union-Intersection Optimization finds a candidate
 
-    let start = Instant::now();
+    let start: Instant = Instant::now();
 
     println!("Searching for {:?}...", TARGET);
     print!("Depth 1 (and 2)");
@@ -68,7 +68,7 @@ fn main() {
             }
         }
 
-        let output = current[depth - 1];
+        let output: [i16; STATES as usize] = current[depth - 1];
         if output == TARGET {
             candidate = Vec::new();
             for i in &count {
@@ -140,10 +140,10 @@ fn iter8 (mut count: Vec<[usize; 2]>, mut change: usize, mut last: usize, mcount
             }
         }
 
-        let mut zero = false;
+        let mut zero: bool = false;
 
         for i in change + 1..last + 1 { // Set appropriate count elements to "0"
-            let pair = &pairs[count[i - 1][0] as usize];
+            let pair: &Vec<[usize; 2]> = &pairs[count[i - 1][0] as usize];
             if pair.len() == 0 { // If no valid layers to follow the previous one, go back and change the previous layer (consider some form of handling when creating pairs to avoid checking this condition in the first place)
                 zero = true;
                 change = i - 1;
@@ -173,8 +173,8 @@ legality: &Vec<[usize; 2]>                  - A vector specifying what input-out
 start: Instant                              - Used for timing.
 */
 fn next (mut count: Vec<[usize; 2]>, mut current: Vec<[i16; STATES as usize]>, mut depth: usize, unique: &Vec<[i16; STATES as usize]>, mcount: usize, pairs: &Vec<Vec<[usize; 2]>>, legality: &Vec<[usize; 2]>, start: Instant) -> (Vec<[usize; 2]>, Vec<[i16; STATES as usize]>, usize) {
-    let mut last = depth - 1;
-    let mut change = last;
+    let mut last: usize = depth - 1;
+    let mut change: usize = last;
     let mut asc: [i16; STATES as usize] = [0i16; STATES as usize];
     for i in 1..STATES {
         asc[i as usize] = i;

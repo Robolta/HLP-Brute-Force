@@ -1,36 +1,28 @@
 use crate::constants::*;
 use crate::layer::*;
 use std::cmp::max;
+use itertools::Itertools;
 
 // Generates the vector of unique layers
 pub fn generate_unique () -> Vec<[i16; STATES as usize]> {
-    let mut groups: Vec<i16> = Vec::new();
+    let mut target_groups: Vec<i16> = Vec::new();
     for i in TARGET {
-        if !groups.contains(&(i as i16)) {
-            groups.push(i as i16);
+        if !target_groups.contains(&(i as i16)) {
+            target_groups.push(i as i16);
         }
     }
 
     let mut outputs: Vec<[i16; STATES as usize]> = Vec::new();
     for i in 0..(4 * STATES.pow(2)) {
 
-        let ma = i / (2 * STATES.pow(2)) == 1;
-        let mb = (i / STATES.pow(2)) % 2 == 1;
-        let va = (i / STATES) % STATES;
-        let vb = i % STATES;
+        let mode_a: bool = i / (2 * STATES.pow(2)) == 1;
+        let mode_b: bool = (i / STATES.pow(2)) % 2 == 1;
+        let a: i16 = (i / STATES) % STATES;
+        let b: i16 = i % STATES;
 
-        let mut current: [i16; STATES as usize] = [0; STATES as usize];
-        let mut groups2: Vec<i16> = Vec::new();
+        let current: [i16; STATES as usize] = layer(a, b, mode_a, mode_b);
 
-        for j in 0..STATES {
-            // A single input-output pair passing through a layer (The maximum of the two comparators)
-            current[j as usize] = max(comparator(j, va, ma), comparator(vb, j, mb));
-            if !groups2.contains(&current[j as usize]) {
-                groups2.push(current[j as usize]);
-            }
-        }
-
-        if !outputs.contains(&current) &&  groups2.len() >= groups.len() {
+        if !outputs.contains(&current) &&  groups(current) >= target_groups.len() {
             outputs.push(current);
         }
     }
@@ -38,4 +30,19 @@ pub fn generate_unique () -> Vec<[i16; STATES as usize]> {
     outputs.remove(0);
 
     return outputs;
+}
+
+fn layer (a: i16, b: i16, mode_a: bool, mode_b: bool) -> [i16; STATES as usize] {
+    
+    let mut output: [i16; STATES as usize] = Default::default();
+    for i in 0..STATES {
+        let a_side: i16 = comparator(i, a, mode_a);
+        let b_side: i16 = comparator(b, i, mode_b);
+        output[i as usize] = max(a_side, b_side);
+    }
+    return output;
+}
+
+fn groups (output: [i16; STATES as usize]) -> usize {
+    return output.into_iter().unique().collect_vec().len();
 }

@@ -26,13 +26,13 @@ pub fn generate_pairs (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> V
     let mut pairs: Vec<Vec<[usize; 2]>> = Vec::new();
     for i in 0..mcount {
 
-        let first = unique[i];
+        let first: [i16; STATES as usize] = unique[i];
         //let mut cpairs: Vec<[i16; STATES as usize]> = Vec::new();
         let mut cpairs: Vec<[usize; 2]> = Vec::new();
         for j in 0..mcount {
             
-            let second = unique[j];
-            let pass = through(second, first);
+            let second: [i16; STATES as usize] = unique[j];
+            let pass: [i16; STATES as usize] = through(second, first);
 
             let mut groups2: Vec<i16> = Vec::new();
             for i in pass {

@@ -2,7 +2,7 @@ use crate::constants::*;
 use bit_vec::BitVec;
 
 pub fn ending_layers (mcount: &usize, unique: &Vec<[i16; STATES as usize]>) -> Vec<usize> {
-    let mut target_outputs = Vec::new();
+    let mut target_outputs: Vec<i16> = Vec::new();
     for i in 0..STATES {
         if TARGET.contains(&i) {
             target_outputs.push(i);
