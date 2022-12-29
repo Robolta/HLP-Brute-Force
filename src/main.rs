@@ -1,14 +1,13 @@
 use std::io::stdin;
 use std::time::Instant;
-use std::cmp::max;
 
 mod constants;
 mod optimizations;
-mod comp;
+mod layer;
 
 use constants::*;
-use optimizations::{legality::*, unique_vec::*, union_intersect::*};
-use comp::*;
+use optimizations::{legality::*, unique_vec::*, union_intersect::*, pair_vec::*};
+use layer::*;
 
 fn main() {
 
@@ -33,29 +32,22 @@ fn main() {
 
     // Generate pairs of layers which can come one after another
     print!("Generating pairs...");
-
     let pairs: Vec<Vec<[usize; 2]>> = generate_pairs(&unique, mcount);
-
     let mut pair_length = 0;
     for p in &pairs {
         pair_length += p.len();
     }
-
     println!("Done! ({} pairs)", thousands(pair_length));
     println!("Precalculations done (Took {:?})\n", start.elapsed());
 
-    let mut count: Vec<[usize; 2]> = Vec::new();
-    count.push([0, 0]);
-
-    let mut current: Vec<[i16; STATES as usize]> = Vec::new();
-    current.push(unique[0]);
-
+    let mut count: Vec<[usize; 2]> = vec![[0, 0]];
+    let mut current: Vec<[i16; STATES as usize]> = vec![unique[0]];
     let mut depth = 1;
-
-    let start = Instant::now();
-
+    
     let mut candidate: Vec<[usize; 2]> = Default::default();
     let mut next_layer = false; // true if Union-Intersection Optimization finds a candidate
+
+    let start = Instant::now();
 
     println!("Searching for {:?}...", TARGET);
     print!("Depth 1 (and 2)");
@@ -109,73 +101,6 @@ fn main() {
         println!("{:?}", x);
     }
 
-}
-
-fn thousands (n: usize) -> String {
-    let mut output = String::new();
-    let mut count = n.to_string().len();
-    for c in n.to_string().chars() {
-        if count % 3 == 0 && count != n.to_string().len(){
-            output += ",";
-        }
-        output += &c.to_string();
-        count -= 1;
-    }
-    return output;
-}
-
-fn find_next (count: &Vec<[usize; 2]>, unique: &Vec<[i16; STATES as usize]>, endings: &Vec<usize>) -> Vec<[usize; 2]> {
-    let mut current: [i16; STATES as usize] = [0; STATES as usize];
-    for i in 0..STATES as usize {
-        current[i] = i as i16;
-    }
-
-    for c in count.to_vec() {
-        current = through(unique[c[0]], current);
-    }
-
-    let mut ncount = Vec::new();
-    for c in count {
-        ncount.push(*c);
-    }
-
-    for e in endings {
-        if through(unique[*e], current) == TARGET {
-            ncount.push([*e, *e]);
-            break;
-        }
-    }
-    return ncount;
-}
-
-fn print_notation (count: Vec<[usize; 2]>, unique: &Vec<[i16; STATES as usize]>) {
-    let mut output = String::new();
-    for c in count {
-        for i in 0..(4 * STATES.pow(2)) {
-
-            let ma = i / (2 * STATES.pow(2)) == 1;
-            let mb = (i / STATES.pow(2)) % 2 == 1;
-            let va = (i / STATES) % STATES;
-            let vb = i % STATES;
-
-            let mut current = [0i16; STATES as usize];
-
-            for i in 0..STATES {
-                current[i as usize] = max(comparator(i, va, ma), comparator(vb, i, mb));
-            }
-
-            if current == unique[c[0] as usize] {
-                output += &if ma {"*"} else {""}.to_owned();
-                output += &va.to_string();
-                output += ",";
-                output += &if mb {"*"} else {""}.to_owned();
-                output += &vb.to_string();
-                output += "; ";
-                break;
-            }
-        }
-    }
-    println!("\n{}", output);
 }
 
 /*
@@ -282,67 +207,4 @@ fn next (mut count: Vec<[usize; 2]>, mut current: Vec<[i16; STATES as usize]>, m
             }
         }
     }
-}
-
-/*
-Generates a vector of valid layers to follow each layer in unique
-key: layer ([i16; STATES as usize]), value: unique indexes, index in current table (Vec<[usize; 2]>)*/
-fn generate_pairs (unique: &Vec<[i16; STATES as usize]>, mcount: usize) -> Vec<Vec<[usize; 2]>> { // Consider some form of handling for layers which have no valid layer after
-    let mut groups: Vec<i16> = Vec::new();
-    for i in TARGET {
-        if !groups.contains(&(i as i16)) {
-            groups.push(i as i16);
-        }
-    }
-
-    let mut unique2: Vec<[i16; STATES as usize]> = Vec::new();
-    let mut identity: [i16; STATES as usize] = [0; STATES as usize];
-    for i in 0..STATES {
-        identity[i as usize] = i;
-    }
-    unique2.push(identity); // Don't include identity outputs
-
-    for i in unique { // Don't include cases which give the same output as single layers
-        unique2.push(*i);
-    }
-
-    let mut pairs: Vec<Vec<[usize; 2]>> = Vec::new();
-    for i in 0..mcount {
-
-        let first = unique[i];
-        //let mut cpairs: Vec<[i16; STATES as usize]> = Vec::new();
-        let mut cpairs: Vec<[usize; 2]> = Vec::new();
-        for j in 0..mcount {
-            
-            let second = unique[j];
-            let pass = through(second, first);
-
-            let mut groups2: Vec<i16> = Vec::new();
-            for i in pass {
-                if !groups2.contains(&(i as i16)) {
-                    groups2.push(i as i16);
-                }
-            }
-
-            if groups2.len() >= groups.len() && !unique2.contains(&pass) {
-                cpairs.push([j, cpairs.len()]); // [Unique Index, Pairs Element Index]
-                unique2.push(pass);
-            }
-        }
-
-        pairs.push(cpairs);
-    }
-
-    return pairs;
-}
-
-// Passes the input through the provided layer
-fn through (layer: [i16; STATES as usize], input: [i16; STATES as usize]) -> [i16; STATES as usize] {
-    let mut output = [0; STATES as usize];
-
-    for i in 0..STATES {
-        output[i as usize] = layer[input[i as usize] as usize];
-    }
-
-    return output;
 }
