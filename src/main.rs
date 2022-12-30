@@ -39,7 +39,7 @@ fn main() {
         pair_length += p.len();
     }
     println!("Done! ({} pairs)", thousands(pair_length));
-    println!("Precalculations done (Took {:?})\n", start.elapsed());
+    println!("Pre-calculations done (Took {:?})\n", start.elapsed());
 
     let mut count: Vec<[usize; 2]> = vec![[0, 0]]; // Layers in the current function
     let mut current: Vec<[i16; STATES as usize]> = vec![unique[0]]; // Current function
