@@ -40,11 +40,11 @@ fn main() {
     println!("Done! ({} pairs)", thousands(pair_length));
     println!("Precalculations done (Took {:?})\n", start.elapsed());
 
-    let mut count: Vec<[usize; 2]> = vec![[0, 0]];
-    let mut current: Vec<[i16; STATES as usize]> = vec![unique[0]];
-    let mut depth: usize = 1;
+    let mut count: Vec<[usize; 2]> = vec![[0, 0]]; // Layers in the current function
+    let mut current: Vec<[i16; STATES as usize]> = vec![unique[0]]; // Current function
+    let mut depth: usize = 1; // Current search depth
     
-    let mut candidate: Vec<[usize; 2]> = Default::default();
+    let mut candidate: Vec<[usize; 2]> = Default::default(); // Stores candidate when a solution is found (Union-Intersection or otherwise)
     let mut next_layer: bool = false; // true if Union-Intersection Optimization finds a candidate
 
     let start: Instant = Instant::now();
@@ -104,6 +104,55 @@ fn main() {
 }
 
 /*
+Returns the next valid function to check.
+
+mut count: Vec<[usize; 2]>                  - A vector of index pairs.  First value is the layer's index within the unique vector, second is the layer's index within the previous layer's pair vector.
+mut current: Vec<[i16; STATES as usize]>    - The immediate outputs of the current function.  Used to avoid recalculating the entire function whenever it is changed.
+mut depth: usize                            - The current search depth.
+unique: &Vec<[i16; STATES as usize]>        - The vector of unique layers for the TARGET.
+mcount: usize                               - The number of layers in unique.
+pairs: &Vec<Vec<[usize; 2]>>                - Stores which layers can follow each of the unique layers.
+legality: &Vec<[usize; 2]>                  - A vector specifying what input-output pairs are illegal.
+start: Instant                              - Used for timing.
+*/
+fn next (mut count: Vec<[usize; 2]>, mut current: Vec<[i16; STATES as usize]>, mut depth: usize, unique: &Vec<[i16; STATES as usize]>, mcount: usize, pairs: &Vec<Vec<[usize; 2]>>, legality: &Vec<[usize; 2]>, start: Instant) -> (Vec<[usize; 2]>, Vec<[i16; STATES as usize]>, usize) {
+    let mut last: usize = depth - 1;
+    let mut change: usize = last;
+    let mut asc: [i16; STATES as usize] = [0i16; STATES as usize];
+    for i in 1..STATES {
+        asc[i as usize] = i;
+    }
+
+    loop { // Repeats until legal (doesn't check very end layer)
+        
+        (count, change, last, depth) = iter8(count, change, last, mcount, depth, &pairs, start); // Iterate
+
+        for i in change..last + 1 { // Iterate over all indexes affected by the change
+            
+            // Update the layers for the affected indexes
+            if i == 0 {
+                current[i] = through(unique[count[i][0] as usize], asc);
+            } else if i > current.len() - 1 {
+                current.push(through(unique[count[i][0] as usize], current[i - 1]));
+            } else {
+                current[i] = through(unique[count[i][0] as usize], current[i - 1]);
+            }
+            
+            if i == last { // If the last index is reached without any illegal intermediate outputs
+                return (count, current, depth); // Return the next valid states
+            } else if !legal(current[i], legality) { // If an index isn't the last and isn't legal
+                change = i; // Set the change index to i
+                if DEBUG & 2 == 2 {
+                    println!("\t\t[CHANGING] {:?}", count);
+                }
+
+                break; // Start from the beginning
+            }
+        }
+    }
+}
+
+/*
 Iterates the current function once
 mut count: Vec<[usize; 2]>      - A vector of index pairs.  First value is the layer's index within the unique vector, second is the layer's index within the previous layer's pair vector.
 mut change: usize               - The index to be changed within count.
@@ -158,53 +207,4 @@ fn iter8 (mut count: Vec<[usize; 2]>, mut change: usize, mut last: usize, mcount
     }
 
     return (count, change, last, depth);
-}
-
-/*
-Returns the next valid function to check.
-
-mut count: Vec<[usize; 2]>                  - A vector of index pairs.  First value is the layer's index within the unique vector, second is the layer's index within the previous layer's pair vector.
-mut current: Vec<[i16; STATES as usize]>    - The immediate outputs of the current function.  Used to avoid recalculating the entire function whenever it is changed.
-mut depth: usize                            - The current search depth.
-unique: &Vec<[i16; STATES as usize]>        - The vector of unique layers for the TARGET.
-mcount: usize                               - The number of layers in unique.
-pairs: &Vec<Vec<[usize; 2]>>                - Stores which layers can follow each of the unique layers.
-legality: &Vec<[usize; 2]>                  - A vector specifying what input-output pairs are illegal.
-start: Instant                              - Used for timing.
-*/
-fn next (mut count: Vec<[usize; 2]>, mut current: Vec<[i16; STATES as usize]>, mut depth: usize, unique: &Vec<[i16; STATES as usize]>, mcount: usize, pairs: &Vec<Vec<[usize; 2]>>, legality: &Vec<[usize; 2]>, start: Instant) -> (Vec<[usize; 2]>, Vec<[i16; STATES as usize]>, usize) {
-    let mut last: usize = depth - 1;
-    let mut change: usize = last;
-    let mut asc: [i16; STATES as usize] = [0i16; STATES as usize];
-    for i in 1..STATES {
-        asc[i as usize] = i;
-    }
-
-    loop { // Repeats until legal (doesn't check very end layer)
-        
-        (count, change, last, depth) = iter8(count, change, last, mcount, depth, &pairs, start); // Iterate
-
-        for i in change..last + 1 { // Iterate over all indexes affected by the change
-            
-            // Update the layers for the affected indexes
-            if i == 0 {
-                current[i] = through(unique[count[i][0] as usize], asc);
-            } else if i > current.len() - 1 {
-                current.push(through(unique[count[i][0] as usize], current[i - 1]));
-            } else {
-                current[i] = through(unique[count[i][0] as usize], current[i - 1]);
-            }
-            
-            if i == last { // If the last index is reached without any illegal intermediate outputs
-                return (count, current, depth); // Return the next valid states
-            } else if !legal(current[i], legality) { // If an index isn't the last and isn't legal
-                change = i; // Set the change index to i
-                if DEBUG & 2 == 2 {
-                    println!("\t\t[CHANGING] {:?}", count);
-                }
-
-                break; // Start from the beginning
-            }
-        }
-    }
 }
