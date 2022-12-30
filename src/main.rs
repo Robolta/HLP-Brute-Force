@@ -11,6 +11,7 @@ use layers::*;
 
 fn main() {
 
+    println!("Starting Pre-Calculations...");
     let start: Instant = Instant::now();
 
     // Generate vector used to verify legality of intermediate outputs
