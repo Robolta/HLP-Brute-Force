@@ -45,6 +45,9 @@ pub fn intersect_check (output: [i16; STATES as usize], union: &[[BitVec; STATES
 
     for i in 0..STATES as usize{
         inter.and(&union[i][output[i] as usize]);
+        if inter.none() {
+            return false;
+        }
     }
     
     return !inter.none();
