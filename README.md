@@ -1,6 +1,22 @@
 # HLP Brute Force
 An optimized brute force program created to find solutions for the Hex Layer Problem.
 
+## Table of Contents
+
+- The Hex Layer Problem
+    - Short Explanation
+    - Long Explanation
+    - Layer Notation
+- HLP Optimized Brute Force
+    - Storing Layers
+    - Unique Layers
+        - Unique Functions
+    - Intermediate Outputs
+    - Group Check
+    - Function Legality
+    - Pairwise Iteration
+    - Union-Intersection
+
 ## The Hex Layer Problem
 *What is the Hex Layer Problem anyway?*
 
@@ -11,13 +27,12 @@ The short explanation is that the problem asks the following:
 Given a target sequence, find the optimal (shortest) function of layers which reaches it.  
 "Reaching" a target sequence just means treating the sequence as a function (index = input) would have the same funcitonality as the layer-composed function.
 
----
-
 ### Long Explanation
 
 First, what is a layer?
 
 A layer is a redstone circuit within the game Minecraft.  
+It was first designed by Aminotreal and Powsi.
 It has 1024 possible static states which affect the main input-output relationship.
 
 ![image](https://media.discordapp.net/attachments/721120731974598726/1017443702332993616/unknown.png)
