@@ -33,7 +33,7 @@ fn main() {
 
     // Generate pairs of layers which can come one after another
     print!("Generating pairs...");
-    let pairs: Vec<Vec<[usize; 2]>> = generate_pairs(&unique, mcount);
+    let pairs: Vec<Vec<[usize; 2]>> = generate_pairs(&unique);
     let mut pair_length = 0;
     for p in &pairs {
         pair_length += p.len();
@@ -116,16 +116,24 @@ pairs: &Vec<Vec<[usize; 2]>>                - Stores which layers can follow eac
 legality: &Vec<[usize; 2]>                  - A vector specifying what input-output pairs are illegal.
 start: Instant                              - Used for timing.
 */
-fn next (mut count: Vec<[usize; 2]>, mut current: Vec<[i16; STATES as usize]>, mut depth: usize, unique: &Vec<[i16; STATES as usize]>, mcount: usize, pairs: &Vec<Vec<[usize; 2]>>, legality: &Vec<[usize; 2]>, start: Instant) -> (Vec<[usize; 2]>, Vec<[i16; STATES as usize]>, usize) {
-    let mut last: usize = depth - 1;
-    let mut change: usize = last;
+fn next (
+    mut count: Vec<[usize; 2]>,
+    mut current: Vec<[i16; STATES as usize]>,
+    mut depth: usize,
+    unique: &Vec<[i16; STATES as usize]>,
+    mcount: usize,
+    pairs: &Vec<Vec<[usize; 2]>>,
+    legality: &Vec<[usize; 2]>,
+    start: Instant
+) -> (Vec<[usize; 2]>, Vec<[i16; STATES as usize]>, usize) {
+    let mut last = depth - 1;
+    let mut change = last;
     let mut asc: [i16; STATES as usize] = [0i16; STATES as usize];
     for i in 1..STATES {
         asc[i as usize] = i;
     }
 
     loop { // Repeats until legal (doesn't check very end layer)
-        
         (count, change, last, depth) = iter8(count, change, last, mcount, depth, &pairs, start); // Iterate
 
         for i in change..last + 1 { // Iterate over all indexes affected by the change
