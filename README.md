@@ -40,7 +40,7 @@ It has 1024 possible static states which affect the main input-output relationsh
 Each of the barrels (brown) can produce a signal from 0 to 15.  
 Each of the right two comparators (white) can be in either a "compare" or "subtract" state.
 
-16^2 * 2^2 = 1024 states
+16 * 16 * 2 * 2 = 1024 states
 
 We can reach more than 1024 possible functions by simply chaining together the inputs and outputs of multiple layers.
 
