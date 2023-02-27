@@ -73,7 +73,7 @@ The output can never be less than 0, so subtract mode is at least 0. (Negative s
 After the two comparators produce their outputs, the larger of the two reaches the final output.
 
 So, again, the problem boils down to finding a configuration of layers which uses as few as possible to reach a target function.  
-[Sorting by Prefix Reversals is NP-Hard](https://arxiv.org/abs/1111.0434v1) and they are the only layers we have to sort while maintaining the full 16 output values.  
+[Sorting by Prefix Reversals is NP-Hard](https://arxiv.org/abs/1111.0434v1) and they are the only layers we can use to sort while maintaining the full 16 output values.  
 This means that our problem only proves to be doable optimally with brute force.
 
 ### Layer Notation
